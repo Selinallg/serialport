@@ -1,0 +1,57 @@
+//apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+//    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.ex.serialport"
+        minSdkVersion 26
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        ndk {
+            ldLibs "log", "z", "m"
+//            abiFilters "armeabi-v7a", "arm64-v8a"//, "mips"
+            abiFilters "arm64-v8a"//, "mips"
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+//    implementation 'androidx.core:core-ktx:1.12.0'
+//    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+//    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.0'
+//    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.42'
+//    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.4'
+//    implementation "io.github.cymchad:BaseRecyclerViewAdapterHelper:4.0.1"
+    implementation project(':serialport')
+    implementation 'com.google.android.material:material:1.4.0'
+//    implementation 'tp.xmaihh:serialport:2.0'
+}
