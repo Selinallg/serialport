@@ -28,6 +28,7 @@ nolo::uart_manager* get_uart(){
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_ex_serialport_Main3Activity_open(JNIEnv *env, jobject thiz) {
+    get_uart()->isSonic = true;
     get_uart()->open();
 
 }

@@ -14,7 +14,9 @@
 #include <iostream>
 #include <fstream>
 #include <fmt/format.h>
-//#include <deviceLib\nolo_log.h>
+//#include <nolo_log.h>
+#include "nlog.h"
+
 #ifndef TIOCPMGET
 #define TIOCPMGET 0x544D  /* PM get */
 #endif
@@ -49,7 +51,7 @@ void nolo::uart_manager::open() {
 
     close();
 
-    if (false) {
+    if (isSonic) {
 
         //kInfo("start to open uart");
 
@@ -64,16 +66,22 @@ void nolo::uart_manager::open() {
         }
     }
 
-    fd = ::open("/dev/ttyHS4", O_RDWR | O_NOCTTY);
+    if (isSonic) {
+        fd = ::open("/dev/ttyHS4", O_RDWR | O_NOCTTY);
+    } else {
+        fd = ::open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
+    }
+    LOGD("open /dev/ttyHS4 error, %d", errno);
 //    Must(fd >= 0, "open /dev/ttyHS4 error, %d", errno);
 
-    termios options{};
+    if (isSonic) {
+        termios options{};
 //    Must(tcgetattr(fd, &options) == 0, "tcgetattr failed: %d", errno);
-
-    initUartConfig(&options);
+        initUartConfig(&options);
 //    Must(tcsetattr(fd, TCSANOW, &options) == 0,"tcsetattr failed: %d", errno);
-    tcflush(fd, TCIOFLUSH);
+        tcflush(fd, TCIOFLUSH);
 //    NVR_HANDTRACK_DEBUG("uart_open called\n");
+    }
 
     uartReadFlag = true;
     readThread = std::thread([this]() {
@@ -97,7 +105,7 @@ void nolo::uart_manager::close() {
         return;
     }
 
-    if (false) {
+    if (isSonic) {
 
         //kInfo("start to close uart");
 
@@ -160,12 +168,15 @@ void nolo::uart_manager::initUartConfig(termios *cfg) {
 }
 
 //#include <sys/prctl.h>
+int64_t last_timestamp = 0;
+int64_t count = 0;
+
 void nolo::uart_manager::readThreadImpl() {
     std::vector<uint8_t> buffer;
     buffer.resize(10240);
     int count = 0;
 //    device_util::set_self_thread_priority();
-//    //device_util::set_cur_thread_affinity(2);
+//    //device_util::set_cur_thread_affinity(2)
 //    device_util::set_thread_priority_self();
 //    nice(-20);
 //
@@ -176,7 +187,15 @@ void nolo::uart_manager::readThreadImpl() {
         //  std::this_thread::sleep_for(std::chrono::milliseconds (4));
 
         auto rv = read(fd, &buffer[0], buffer.size());
+        LOGD("read IMU_DATA:%d", rv);
         if (rv > 0) {
+            count++;
+            auto current_timestamp = device_util::get_timestamp_ms();
+            if (current_timestamp - last_timestamp > 1000) {
+                LOGD("read IMU_DATA: Hz=%d", count);
+                count = 0;
+                last_timestamp = current_timestamp;
+            }
             if (rv >= 1024) {
 //                NVR_LOGD(TAG, "readThreadImpl abnormal");
                 if (first_abnormal_timestamp != 0) {
@@ -322,8 +341,8 @@ void nolo::uart_manager::process_package(uint8_t *buffer, int32_t size) {
         return;
     }
 
-    // //kInfo("process_package IMU_DATA: {}", uart_manager::data_frame_to_string(buffer, size));
-
+//    kInfo("process_package IMU_DATA: {}", uart_manager::data_frame_to_string(buffer, size));
+    LOGD("process_package IMU_DATA:%s", uart_manager::data_frame_to_string(buffer, size).c_str());
     auto tBuffer = (uint16_t *) buffer;
 
     if (tBuffer[1] == 0x55aa && tBuffer[0] == tBuffer[2] + 4) {

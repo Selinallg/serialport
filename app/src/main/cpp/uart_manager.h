@@ -75,6 +75,9 @@ namespace nolo
         bool isRunning = false;
         volatile bool reconnectFlag = false;
         volatile bool uartReadFlag = false;
+
+    public:
+        bool isSonic = false;
     };
 
 }

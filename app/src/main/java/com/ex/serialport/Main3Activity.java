@@ -12,6 +12,10 @@ import java.io.FileOutputStream;
 
 public class Main3Activity extends AppCompatActivity {
 
+    static {
+       System.loadLibrary("uartusb");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
