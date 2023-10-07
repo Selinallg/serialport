@@ -10,9 +10,14 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 <!--        <activity-->
-<!--            android:name=".Main2Activity"-->
+<!--            android:name=".Main3Activity"-->
 <!--            android:exported="false" />-->
-        <activity android:name=".MainActivity">
+
+
+        <!-- <activity -->
+        <!-- android:name=".Main2Activity" -->
+        <!-- android:exported="false" /> -->
+        <activity android:name=".Main3Activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

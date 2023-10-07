@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <string>
 #include <stdio.h>
-#include <fmt/format.h>
+//#include <fmt/format.h>
 
 class device_util{
 public:

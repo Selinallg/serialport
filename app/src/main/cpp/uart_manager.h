@@ -66,6 +66,7 @@ namespace nolo
         void watcher_thread();
     private:
         int fd = -1;
+        int mcu_pwr_fd = -1;
         std::thread readThread;
         std::thread watcherThread;
         std::unordered_map<uint8_t,uint64_t> cmdUpdateTime;
