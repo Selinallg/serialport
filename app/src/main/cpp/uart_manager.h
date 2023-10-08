@@ -47,6 +47,9 @@ namespace nolo
         static std::string data_frame_to_string(void* buffer, uint32_t size);
         static std::string convert_data_to_string(void* buffer, uint32_t size);
 
+        void process_package_tai(uint8_t* buffer, int32_t size);
+
+
     private:
 
         void initUartConfig(termios* cfg);
@@ -56,7 +59,6 @@ namespace nolo
         void SendDefaultStopCmd();
 
         void process_package(uint8_t* buffer, int32_t size);
-
         void putErrorToLogFile(std::string &in_strErr);
 
         bool isValidDataCrc(uint8_t *buffer , uint16_t size);

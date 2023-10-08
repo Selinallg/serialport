@@ -69,10 +69,12 @@ void nolo::uart_manager::open() {
 
     if (isSonic) {
         fd = ::open("/dev/ttyHS4", O_RDWR | O_NOCTTY);
+        LOGD("open /dev/ttyHS4 error, %d", errno);
     } else {
         fd = ::open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
+        LOGD("open /dev/ttyACM0 error, %d", errno);
     }
-    LOGD("open /dev/ttyHS4 error, %d", errno);
+
 //    Must(fd >= 0, "open /dev/ttyHS4 error, %d", errno);
 
     if (isSonic) {
@@ -337,6 +339,116 @@ bool nolo::uart_manager::isChirpCommand(uint16_t cmd) {
     return false;
     auto &ChirpCmdList = getChirpCmdList();
     return std::find(ChirpCmdList.begin(), ChirpCmdList.end(), cmd) != ChirpCmdList.end();
+}
+
+int64_t last_timestamp_vsync = 0;
+int64_t count_vsync = 0;
+void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
+    if (size == 0) {
+        return;
+    } else if (size < 4) {
+        //kWarn("error: size not enough, size: {}",size);
+        return;
+    }
+
+//    kInfo("process_package IMU_DATA: {}", uart_manager::data_frame_to_string(buffer, size));
+//    LOGD("process_package IMU_DATA:%s size=%d", uart_manager::data_frame_to_string(buffer, size).c_str(),size);
+
+    auto tBuffer = (uint16_t *) buffer;
+
+    if (tBuffer[1] == 0x55aa && tBuffer[0] == tBuffer[2] + 4) {
+
+
+        //Analyze Whether UART Actively Reports OR Commands Reply
+        if (tBuffer[2] == 0x001A && tBuffer[3] == 0x26a) {
+            //IMU Data Frame
+            // 1E00 AA55 1A00 6A02 4E2E3E0400000000F9FF04000900EC07FCFE73014C08DCC1
+            if (onIMUFrameData && isValidDataCrc(buffer, tBuffer[0] + 2)) {
+                count++;
+                auto current_timestamp = device_util::get_timestamp_ms();
+                if (current_timestamp - last_timestamp > 1000) {
+                    LOGD("dispatch IMU_DATA: Hz=%d", count);
+                    count = 0;
+                    last_timestamp = current_timestamp;
+                }
+                LOGD("raw_data_trace IMU_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
+//                onIMUFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
+            }
+        } else if (tBuffer[2] == 0x0010 && tBuffer[3] == 0x0f01) {
+            // 1400 AA55 1000 010F BE2C3E040000000005030000005B
+           // LOGD("raw_data_trace 1 VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
+            //vsync Data Frame
+            if (onIPDFrameData && isValidDataCrc(buffer, tBuffer[0] + 2)) {
+//                onIPDFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
+                count_vsync++;
+                auto current_timestamp = device_util::get_timestamp_ms();
+                if (current_timestamp - last_timestamp_vsync > 1000) {
+                    LOGD("dispatch vsync_DATA: Hz=%d", count_vsync);
+                    count_vsync = 0;
+                    last_timestamp_vsync = current_timestamp;
+                }
+                LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
+            }
+
+        } else if (tBuffer[2] == 0x0011 && tBuffer[3] == 0x026C) {
+            //Handle General Data Frame
+            if (onHandleFrameData && isValidDataCrc(buffer, tBuffer[0] + 2)) {
+//                onHandleFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
+            }
+
+        } else {
+            if (size < tBuffer[2] + 2) {
+                //kError("buffer size {}, cmd size {}",size,tBuffer[2]);
+                std::string strErr;
+//                strErr = fmt::format("process pack err rev size = {}, cmd length = {}",size,tBuffer[2]);
+
+                putErrorToLogFile(strErr);
+                ////kError("cmd replay: {}", data_frame_to_string(buffer, size));
+            }
+
+            onCmdFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
+            //cmd replay
+            //kInfo("cmd replay: {}", data_frame_to_string(buffer, size));
+
+            if (tBuffer[3] == 0x100f && lastCheckCmd == 0x100f) {
+                if (buffer[8] == 0xfe) {
+                    if (buffer[15] == 4) {
+                        lastCheckCmd = 0;
+                    } else if (buffer[15] == 5) {
+                        lastCheckCmd = -1;
+                    } else {
+                        lastCheckCmd = -2;
+                        //kWarn("0x100f result invalid: {}, {:02X} {:02X} {:02X} {:02X} {:02X}",buffer[15],
+                        //     tBuffer[0], tBuffer[1], tBuffer[2], tBuffer[3], tBuffer[4]);
+                    }
+                } else if (buffer[8] == 0xff) {
+                    lastCheckCmd = -1;
+                } else {
+                    //kWarn("unknown replay!!!!!!!!: {}", lastCheckCmd);
+                    lastCheckCmd = 0;
+                }
+
+            } else if (tBuffer[3] == lastCheckCmd) {
+                lastCheckCmd = 0;
+            } else {
+                //kWarn("maybe delay cmd");
+            }
+
+        }
+
+        return process_package_tai(buffer + tBuffer[0] + 2, size - tBuffer[0] - 2);
+    } else {
+        //find next package
+        ////kWarn("error head: {:02X} {:02X} {:02X} {:02X}", tBuffer[0], tBuffer[1], tBuffer[2], tBuffer[3]);
+        for (int i = 0; i < size - 6; ++i) {
+            tBuffer = (uint16_t *) (buffer + i);
+            if ((tBuffer[1] == 0x55aa && (tBuffer[0] == (tBuffer[2] + 4)))) {
+//                //kWarn("find and skip size: {}, data: {}", i, convert_data_to_string(buffer,i));
+                return process_package_tai(buffer + i, size - i);
+            }
+        }
+        return;
+    }
 }
 
 void nolo::uart_manager::process_package(uint8_t *buffer, int32_t size) {

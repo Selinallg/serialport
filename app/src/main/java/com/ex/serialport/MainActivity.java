@@ -32,6 +32,10 @@ import tp.xmaihh.serialport.utils.CheckUtils;
 
 public class MainActivity extends AppCompatActivity {
 
+    static {
+        System.loadLibrary("uartusb");
+    }
+
     private static final String TAG = "_MainActivity_";
     private RecyclerView recy;
     private Spinner spSerial;
@@ -51,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spStopb;
     private Spinner spFlowcon;
 
-    private boolean isSonic = true;
+    private boolean isSonic = false;
     private boolean fileRead = false;
     private boolean dispathInThread = false;
     private String devPort;
@@ -141,6 +145,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 private void _dipatch(ComBean comBean) {
+
+
+
                     count++;
                     try {
                         long c = System.currentTimeMillis();
@@ -206,16 +213,17 @@ public class MainActivity extends AppCompatActivity {
 //                });
                 }
 
-                private void _dipatch(ComBean comBean) {
+                private synchronized void _dipatch(ComBean comBean) {
+                    updateDatas(comBean.bRec,comBean.bRec.length);
                     count++;
                     try {
                         long c = System.currentTimeMillis();
                         long chazhi = c - last;
-                        Log.d(TAG, "====}}onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + CheckUtils.byte2hex(comBean.bRec) + " length=" + comBean.bRec.length);
-                        Log.d(TAG, "====--onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + ByteUtil.ByteArrToHex(comBean.bRec) + " length=" + comBean.bRec.length);
+//                        Log.d(TAG, "====}}onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + CheckUtils.byte2hex(comBean.bRec) + " length=" + comBean.bRec.length);
+//                        Log.d(TAG, "====--onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + ByteUtil.ByteArrToHex(comBean.bRec) + " length=" + comBean.bRec.length);
                         if (chazhi > 1000) {
-                            Log.d(TAG, "onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + ByteUtil.ByteArrToHex(comBean.bRec));
-                            Log.d(TAG, "onDataReceived: Hz=" + count);
+//                            Log.d(TAG, "onDataReceived-Hex: " + comBean.sComPort + "|" + comBean.sRecTime + " " + ByteUtil.ByteArrToHex(comBean.bRec));
+//                            Log.d(TAG, "onDataReceived: Hz=" + count);
                             last = c;
                             count = 0;
                         }
@@ -352,10 +360,16 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (fileRead) {
                         serialFileHelper.open();
-                        doStartData();
+                        //doStartData();
                     } else {
                         serialHelper.open();
-                        doStartData();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                doStartData();
+                            }
+                        },2000);
+
                     }
 //                    btOpen.setEnabled(false);
                 } catch (IOException e) {
@@ -395,16 +409,28 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public static byte[] cmd_start_imu = {0x06, 0x00, (byte) 0xAA, 0x55, 0x02, 0x00, 0x01, 0x01};// 泰山
+    public static final int CMD_DEVICE_HMD_UPLOAD_START = 0x0101;
+
     private void doStartData() {
+
         byte cmd[] = new byte[2];
-        for (int i = 0; i < 20; ++i) {
-            cmd[0] = 2;
-            cmd[1] = (byte) 0x101;
-            if (fileRead) {
-                serialFileHelper.send(cmd);
-            } else {
-                serialHelper.send(cmd);
-            }
+        for (int i = 0; i < 10; ++i) {
+//            cmd[0] = 2;
+//            cmd[1] = (byte) 0x101;
+
+            byte[] cmd2 = makeCmd(null, CMD_DEVICE_HMD_UPLOAD_START);
+            serialHelper.send(cmd2);
+            Log.d(TAG, "doStartData: " + CheckUtils.byte2hex(cmd2).toString());
+            Log.d(TAG, "doStartData: " + CheckUtils.byte2hex(cmd_start_imu).toString());
+            ;
+            //serialHelper.send(cmd_start_imu);
+
+//            if (fileRead) {
+//                serialFileHelper.send(cmd);
+//            } else {
+//                serialHelper.send(cmd);
+//            }
         }
     }
 
@@ -426,4 +452,15 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+
+    protected byte[] makeCmd(byte[] data, int cmd) {
+        byte[] result = CmdUtils.makeCmd(data, cmd);
+        result[result.length - 1] = calcuCrc8(result, result.length - 1);
+        return result;
+    }
+
+    public static native byte calcuCrc8(byte[] data, int length);
+
+    public static native void updateDatas(byte[] datas, int length);
 }

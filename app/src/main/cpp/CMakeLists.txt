@@ -27,7 +27,6 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/3rd/glm-0.9.9.8/include/
         ${CMAKE_CURRENT_SOURCE_DIR}/3rd/nlohmann-3.9.1/include/
         ${CMAKE_CURRENT_SOURCE_DIR}/3rd/KinBase/include/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/spdlog/
         ${CMAKE_CURRENT_SOURCE_DIR}/3rd/fmt-7.1.3/include/
 )
 

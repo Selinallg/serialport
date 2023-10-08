@@ -21,7 +21,9 @@ public class BaseStickPackageHelper implements AbsStickPackageHelper {
         try {
             int available = is.available();
             if (available > 0) {
-                byte[] buffer = new byte['?'];
+                //byte[] buffer = new byte['?'];
+                //byte[] buffer = new byte[64];
+                byte[] buffer = new byte[available];
                 Log.d(TAG, "execute: available=" + available + "  buffer.length " + buffer.length);
                 int size = is.read(buffer);
                 if (size > 0) {

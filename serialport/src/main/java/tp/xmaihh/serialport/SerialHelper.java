@@ -106,29 +106,143 @@ public abstract class SerialHelper {
                         return;
                     }
 
-                    byte[] buffer = getStickPackageHelper().execute(SerialHelper.this.mInputStream);
-                    if (buffer != null && buffer.length > 0) {
-                        ComBean ComRecData = new ComBean(SerialHelper.this.sPort, buffer, buffer.length);
-                        SerialHelper.this.onDataReceived(ComRecData);
-                    }
 
-//                    int available = SerialHelper.this.mInputStream.available();
-//
-//                    if (available > 0) {
-//                        byte[] buffer = new byte[available];
-//                        int size = SerialHelper.this.mInputStream.read(buffer);
-//                        if (size > 0) {
-//                            ComBean ComRecData = new ComBean(SerialHelper.this.sPort, buffer, size);
-//                            SerialHelper.this.onDataReceived(ComRecData);
-//                        }
-//                    } else {
-//                        SystemClock.sleep(50);
-//                    }
+                    if (false) {
+
+
+                        byte[] buffer = getStickPackageHelper().execute(SerialHelper.this.mInputStream);
+                        if (buffer != null && buffer.length > 0) {
+                            ComBean ComRecData = new ComBean(SerialHelper.this.sPort, buffer, buffer.length);
+                            SerialHelper.this.onDataReceived(ComRecData);
+                        }
+                    } else {
+
+
+                        int available = SerialHelper.this.mInputStream.available();
+
+                        if (available > 0) {
+                            byte[] buffer = new byte[available];
+                            int size = SerialHelper.this.mInputStream.read(buffer);
+                            if (size > 0) {
+                                ComBean ComRecData = new ComBean(SerialHelper.this.sPort, buffer, size);
+                                SerialHelper.this.onDataReceived(ComRecData);
+                            }
+                        } else {
+                            SystemClock.sleep(50);
+                        }
+                    }
 
                 } catch (Throwable e) {
                     Log.e("error", e.getMessage());
                     return;
                 }
+            }
+        }
+    }
+
+
+    public class ReadThread3 extends Thread {
+        @Override
+        public void run() {
+            super.run();
+            Log.d(TAG, "run: start");
+            try {
+                if (mInputStream == null) {
+                    return;
+                }
+
+
+//                int bytes = 0;
+//                int index = 0;
+                while (!isInterrupted()) {
+                    /*
+                     * 这里的read要注意，它会一直等待数据,直到天荒地老。如果要判断是否接受完成，只有设置结束标识，或作其他特殊的处理
+                     */
+                    int length = mInputStream.available();
+                    byte[] tBuffer = new byte[length];
+                    int size;
+                    try {
+
+                        size = mInputStream.read(tBuffer);
+
+
+                        if (true) return;
+
+
+                        if (size > 0) {
+                            // 2A00AA5526006C02A272099B00000000F9FF040009009905A70560FE0000000005C2000700000000000005B100000000000000000000000000000000000000004200
+                            //1400 AA55 1000 010F EE222B0A0000000005030000001E
+                            //1E00 AA55 1A00 6A02 84232B0A00000000FCFF07000900D2071C002E02BF091E55
+                            //1E00 AA55 1A00 6A02 644BA93300000000FAFF05000900EC075DFFC3014C0B886B
+
+                            //  循环
+                            do {
+
+                                // [30, 0, -86, 85, 26, 0, 106, 2, -44, 81, -72, 83, 0, 0, 0, 0, -6, -1, 1, 0, 10, 0, -8, 7, 93, -1, -77, 1, -64, 11, 73, -98]
+                                //C2JUtils.bytes2IntLittle();
+                                // Byte.toUnsignedInt(byt)
+                                if (tBuffer[1] == (byte) 0x55aa && (tBuffer[0] == (byte) tBuffer[2] + 4)) {
+                                    Log.d(TAG, "run: " + tBuffer[0]);
+                                    byte[] cmd = new byte[tBuffer[0]];
+
+                                    if (tBuffer.length >= tBuffer[0]) {
+
+                                        // imu
+                                        if (tBuffer[2] == 0x001A && tBuffer[3] == 0x026a) {
+                                            //拷贝
+                                            System.arraycopy(tBuffer, 0, cmd, 0, tBuffer[0]);
+                                            Log.d(TAG, "run: 33 " + CheckUtils.byte2hex(cmd));
+                                            // vsync
+                                        } else if (tBuffer[2] == 0x1400 && tBuffer[3] == 0x010F) {
+                                            //拷贝
+                                            System.arraycopy(tBuffer, 0, cmd, 0, tBuffer[0]);
+                                            Log.d(TAG, "run: 22 " + CheckUtils.byte2hex(cmd));
+                                            // 其他数据
+                                        } else {
+                                            //拷贝
+
+                                        }
+                                        // 更新源数据
+                                        int otherLength = tBuffer.length - cmd.length;
+                                        byte[] otherBuffer = new byte[otherLength];
+                                        if (otherBuffer.length > 0) {
+                                            System.arraycopy(tBuffer, cmd.length, otherBuffer, 0, otherBuffer.length);
+                                            tBuffer = null;
+                                            size = otherLength;
+                                            tBuffer = new byte[size];
+                                            System.arraycopy(otherBuffer, 0, tBuffer, 0, size);
+                                            Log.d(TAG, "run: 拷贝后数据：" + size);
+
+                                        } else {
+                                            size = 0;
+                                            Log.d(TAG, "run: 数据结束了");
+                                        }
+
+
+                                    } else {
+                                        Log.e(TAG, "run: 非法数据，丢包了。。。。。。。。。。。");
+                                        // TODO: 2023/10/8  
+                                        size = 0;
+                                        Log.e(TAG, "run: 简单粗暴，直接丢弃 " + CheckUtils.byte2hex(tBuffer));
+                                    }
+                                } else {
+                                    size = 0;
+                                    // TODO: 2023/10/8
+                                    Log.e(TAG, "run:非法数据，非标准头数据， 简单粗暴，直接丢弃  下一次读取 " + CheckUtils.byte2hex(tBuffer));
+                                }
+
+                            } while (size > 0);
+                        }
+
+
+                        //                    Log.d(TAG, "run: ---------------");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -360,14 +474,13 @@ public abstract class SerialHelper {
 
     protected abstract void onDataReceived(ComBean paramComBean);
 
-    //    private AbsStickPackageHelper mStickPackageHelper = new BaseStickPackageHelper();  // 默认不处理粘包，直接读取返回
+    private AbsStickPackageHelper mStickPackageHelper = new BaseStickPackageHelper();  // 默认不处理粘包，直接读取返回
 //    private AbsStickPackageHelper mStickPackageHelper = new StaticLenStickPackageHelper(64);  // 默认不处理粘包，直接读取返回
 
-    public static byte[] cmd_head = {0x00, 0x2A};//
-    //    public static byte[] cmd_head = {0x2A, 0x00};//
-    public static byte[] cmd_tail = {0x00, 0x42};//
-    //    public static byte[] cmd_tail = {0x42, 0x00};//
-    private AbsStickPackageHelper mStickPackageHelper = new SpecifiedStickPackageHelper(cmd_head, cmd_tail);  //
+    // 002A00AA5526006C0
+    public static byte[] cmd_head = {0x2A, 0x00, (byte) 0xAA, 0x55, 0x26, 0x00, 0x6C, 0x02};//
+    public static byte[] cmd_tail = {0x42, 0x00};//
+//    private AbsStickPackageHelper mStickPackageHelper = new SpecifiedStickPackageHelper(cmd_head, cmd_tail);  //
 
     public AbsStickPackageHelper getStickPackageHelper() {
         return mStickPackageHelper;

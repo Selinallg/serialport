@@ -226,12 +226,13 @@ public abstract class SerialFileHelper {
 
     protected abstract void onDataReceived(ComBean paramComBean);
 
-    public static byte[] cmd_head = {0x2A, 0x00};//
+    // 002A00AA5526006C0
+    public static byte[] cmd_head = {0x2A, 0x00, (byte) 0xAA, 0x55, 0x26, 0x00, 0x6C, 0x02};//
     public static byte[] cmd_tail = {0x42, 0x00};//
 
-//    private AbsStickPackageHelper mStickPackageHelper = new BaseStickPackageHelper();  // 默认不处理粘包，直接读取返回
+//        private AbsStickPackageHelper mStickPackageHelper = new BaseStickPackageHelper();  // 默认不处理粘包，直接读取返回
 //    private AbsStickPackageHelper mStickPackageHelper = new StaticLenStickPackageHelper(64);  //
-    private AbsStickPackageHelper mStickPackageHelper = new SpecifiedStickPackageHelper(cmd_head,cmd_tail);  //
+    private AbsStickPackageHelper mStickPackageHelper = new SpecifiedStickPackageHelper(cmd_head, cmd_tail);  //
 
     public AbsStickPackageHelper getStickPackageHelper() {
         return mStickPackageHelper;
