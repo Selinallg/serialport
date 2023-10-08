@@ -22,18 +22,19 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/boost/include/boost-1_74/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/eigen-3.3.9/include/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/glm-0.9.9.8/include/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/nlohmann-3.9.1/include/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/KinBase/include/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/boost/include/boost-1_74/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/eigen-3.3.9/include/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/glm-0.9.9.8/include/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/nlohmann-3.9.1/include/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/KinBase/include/
+
         ${CMAKE_CURRENT_SOURCE_DIR}/3rd/fmt-7.1.3/include/
 )
 
 link_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/boost/lib/${CMAKE_ANDROID_ARCH_ABI}/
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/fmt-7.1.3/lib/${CMAKE_ANDROID_ARCH_ABI}/
-        ${CMAKE_CURRENT_SOURCE_DIR}/thirdLibrary/${CMAKE_ANDROID_ARCH_ABI}/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/boost/lib/${CMAKE_ANDROID_ARCH_ABI}/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/fmt-7.1.3/lib/${CMAKE_ANDROID_ARCH_ABI}/
+#        ${CMAKE_CURRENT_SOURCE_DIR}/thirdLibrary/${CMAKE_ANDROID_ARCH_ABI}/
 )
 
 
@@ -73,4 +74,4 @@ target_link_libraries( # Specifies the target library.
                        ${log-lib} )
 
 link_directories(3rd/fmt-7.1.3/lib/${ANDROID_ABI})
-link_directories(../../../src/main/jni/libs/${ANDROID_ABI})
+#link_directories(../../../src/main/jni/libs/${ANDROID_ABI})
