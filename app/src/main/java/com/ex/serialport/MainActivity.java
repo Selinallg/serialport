@@ -51,9 +51,10 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spStopb;
     private Spinner spFlowcon;
 
+    private boolean isSonic = true;
     private boolean fileRead = false;
     private boolean dispathInThread = false;
-
+    private String devPort;
 
     protected Handler dispatchHandler;
     protected HandlerThread dispatchThread;
@@ -79,6 +80,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (isSonic) {
+            devPort = "dev/ttyHS4";
+        } else {
+            devPort = "dev/ttyACM0";
+        }
 //        recy = (RecyclerView) findViewById(R.id.recyclerView);
         spSerial = (Spinner) findViewById(R.id.sp_serial);
         edInput = (EditText) findViewById(R.id.ed_input);
@@ -110,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (fileRead) {
-            serialFileHelper = new SerialFileHelper("dev/ttyACM0") {
+            serialFileHelper = new SerialFileHelper(devPort) {
                 long last = 0;
                 int count = 0;
 
@@ -155,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
         } else {
-            serialHelper = new SerialHelper("dev/ttyACM0", 115200) {
+            serialHelper = new SerialHelper(devPort, 115200) {
 
                 long last = 0;
                 int count = 0;
@@ -346,8 +352,10 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (fileRead) {
                         serialFileHelper.open();
+                        doStartData();
                     } else {
                         serialHelper.open();
+                        doStartData();
                     }
 //                    btOpen.setEnabled(false);
                 } catch (IOException e) {
@@ -385,6 +393,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void doStartData() {
+        byte cmd[] = new byte[2];
+        for (int i = 0; i < 20; ++i) {
+            cmd[0] = 2;
+            cmd[1] = (byte) 0x101;
+            if (fileRead) {
+                serialFileHelper.send(cmd);
+            } else {
+                serialHelper.send(cmd);
+            }
+        }
     }
 
     @Override

@@ -33,5 +33,11 @@ public class Main3Activity extends AppCompatActivity {
         open();
     }
 
+
+    public void doClose(View view) {
+        close();
+    }
+
     public native void open();
+    public native void close();
 }

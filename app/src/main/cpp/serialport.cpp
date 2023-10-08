@@ -32,3 +32,8 @@ Java_com_ex_serialport_Main3Activity_open(JNIEnv *env, jobject thiz) {
     get_uart()->open();
 
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ex_serialport_Main3Activity_close(JNIEnv *env, jobject thiz) {
+    get_uart()->close();
+}

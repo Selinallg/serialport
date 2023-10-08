@@ -65,7 +65,6 @@ public class Main2Activity extends AppCompatActivity {
 
     }
 
-
     private class ReadThread
             extends Thread {
         private ReadThread() {

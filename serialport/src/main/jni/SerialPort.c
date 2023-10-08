@@ -25,10 +25,43 @@
 #include "SerialPort.h"
 
 #include "android/log.h"
-static const char *TAG="serial_port";
+
+static const char *TAG = "serial_port";
 #define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
+
+
+void initUartConfig(struct termios *cfg) {
+
+    //c_cflag
+    cfg->c_cflag |= (CLOCAL | CREAD);
+    cfg->c_cflag &= ~CSIZE;
+    cfg->c_cflag &= ~PARENB;
+    cfg->c_cflag |= CS8;
+    cfg->c_cflag &= ~CSTOPB;
+
+    //cfg->c_cflag |= CRTSCTS;//开启流控
+    cfg->c_cflag &= ~CRTSCTS;//关闭流控
+
+    //c_lflag
+    cfg->c_lflag &= ~(ICANON | PENDIN | ECHO | ECHOE | ECHOK | ECHONL | IEXTEN | ECHOCTL | ECHOPRT |
+                      ECHOKE | ISIG | XCASE);
+
+    // c_iflag
+    cfg->c_iflag &= ~(ISTRIP | ICRNL | IGNBRK | BRKINT | IXON | IXOFF | IGNCR | INPCK | PARMRK |
+                      INLCR);
+    cfg->c_iflag |= IGNPAR | IUCLC;
+
+    //c_oflag
+    cfg->c_oflag &= ~(OLCUC | ONLCR | OCRNL | ONOCR | ONLRET | OFILL | OFDEL);
+
+    cfsetispeed(cfg, B460800);
+    cfsetospeed(cfg, B460800);
+
+    cfg->c_cc[VTIME] = 3;/* 非规范模式读取时的超时时间；*/
+    cfg->c_cc[VMIN] = 0; /* 非规范模式读取时的最小字符数*/
+}
 
 static speed_t getBaudrate(jint baudrate) {
     switch (baudrate) {
@@ -138,7 +171,7 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
     }
 
     /* Configure device */
-    {
+    if (1) {
         struct termios cfg;
         LOGD("Configuring serial port");
         if (tcgetattr(fd, &cfg)) {
@@ -223,6 +256,10 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
             /* TODO: throw an exception */
             return NULL;
         }
+    } else {
+        struct termios options;
+        initUartConfig(&options);
+        tcflush(fd, TCIOFLUSH);
     }
 
     /* Create a corresponding file descriptor */

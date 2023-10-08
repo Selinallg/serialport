@@ -64,6 +64,7 @@ void nolo::uart_manager::open() {
             usleep(10000);
 //        NVR_HANDTRACK_DEBUG("mcu_pwr off called\n");
         }
+        LOGE("mcu_pwr_fd %d", mcu_pwr_fd);
     }
 
     if (isSonic) {
@@ -94,6 +95,7 @@ void nolo::uart_manager::open() {
         usleep(600000);
         ::close(mcu_pwr_fd);
 //        NVR_HANDTRACK_DEBUG("mcu_pwr on called\n");
+        LOGD("mcu_pwr on called\n");
     }
 
     SendDefaultCmd();
@@ -101,6 +103,7 @@ void nolo::uart_manager::open() {
 }
 
 void nolo::uart_manager::close() {
+    LOGD("uart close start fd=%d",fd);
     if (fd == -1) {
         return;
     }
@@ -133,7 +136,7 @@ void nolo::uart_manager::close() {
     if (readThread.joinable()) {
         readThread.join();
     }
-    //kInfo("uart close over");
+    LOGD("uart close over");
 }
 
 void nolo::uart_manager::initUartConfig(termios *cfg) {
@@ -165,6 +168,8 @@ void nolo::uart_manager::initUartConfig(termios *cfg) {
 
     cfg->c_cc[VTIME] = 3;/* 非规范模式读取时的超时时间；*/
     cfg->c_cc[VMIN] = 0; /* 非规范模式读取时的最小字符数*/
+
+    LOGD("initUartConfig over");
 }
 
 //#include <sys/prctl.h>
@@ -312,6 +317,7 @@ void nolo::uart_manager::SendDefaultCmd() {
 
     //  std::this_thread::sleep_for(std::chrono::seconds(3));
     std::cout << "send init command over" << std::endl;
+    LOGD("send init command over");
 }
 
 const std::vector<uint16_t> &nolo::uart_manager::getChirpCmdList() {
@@ -342,7 +348,7 @@ void nolo::uart_manager::process_package(uint8_t *buffer, int32_t size) {
     }
 
 //    kInfo("process_package IMU_DATA: {}", uart_manager::data_frame_to_string(buffer, size));
-    LOGD("process_package IMU_DATA:%s", uart_manager::data_frame_to_string(buffer, size).c_str());
+    LOGD("process_package IMU_DATA:%s size=%d", uart_manager::data_frame_to_string(buffer, size).c_str(),size);
     auto tBuffer = (uint16_t *) buffer;
 
     if (tBuffer[1] == 0x55aa && tBuffer[0] == tBuffer[2] + 4) {
