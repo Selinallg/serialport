@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private SerialHelper serialHelper;
     private Spinner spBote;
     private Button btOpen;
+    private Button btStream;
     //    private LogListAdapter logListAdapter;
     private Spinner spDatab;
     private Spinner spParity;
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         btSend = (Button) findViewById(R.id.btn_send);
         spBote = (Spinner) findViewById(R.id.sp_baudrate);
         btOpen = (Button) findViewById(R.id.btn_open);
+        btStream = (Button) findViewById(R.id.btn_stream);
 
         radioGroup = (RadioGroup) findViewById(R.id.radioGroup);
         radioButton1 = (RadioButton) findViewById(R.id.radioButton1);
@@ -116,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
 //        recy.setAdapter(logListAdapter);
 //        recy.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
 
-        serialPortFinder = new SerialPortFinder();
+//        serialPortFinder = new SerialPortFinder();
 
 
         if (fileRead) {
@@ -237,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        final String[] ports = serialPortFinder.getAllDevicesPath();
+//        final String[] ports = serialPortFinder.getAllDevicesPath();
         final String[] botes = new String[]{"0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400", "4800", "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000"};
         final String[] databits = new String[]{"8", "7", "6", "5"};
         final String[] paritys = new String[]{"NONE", "ODD", "EVEN"};
@@ -253,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 serialHelper.close();
-                serialHelper.setPort(ports[position]);
+//                serialHelper.setPort(ports[position]);
                 btOpen.setEnabled(true);
             }
 
@@ -353,6 +355,18 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+        btStream.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        doStartData();
+                    }
+                },2000);
+            }
+        });
+
 
         btOpen.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -363,13 +377,6 @@ public class MainActivity extends AppCompatActivity {
                         //doStartData();
                     } else {
                         serialHelper.open();
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                doStartData();
-                            }
-                        },2000);
-
                     }
 //                    btOpen.setEnabled(false);
                 } catch (IOException e) {
@@ -413,6 +420,8 @@ public class MainActivity extends AppCompatActivity {
     public static final int CMD_DEVICE_HMD_UPLOAD_START = 0x0101;
 
     private void doStartData() {
+
+
 
         byte cmd[] = new byte[2];
         for (int i = 0; i < 10; ++i) {
