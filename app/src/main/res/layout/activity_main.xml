@@ -207,6 +207,16 @@
         app:layout_constraintEnd_toStartOf="@+id/btn_send" />
 
     <Button
+        android:id="@+id/btn_Calib"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/x8"
+        android:layout_marginBottom="@dimen/x8"
+        android:text="写标定"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_send" />
+
+    <Button
         android:id="@+id/btn_send"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

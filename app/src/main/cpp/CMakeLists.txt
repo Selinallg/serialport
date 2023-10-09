@@ -45,6 +45,11 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
+             tai/utils.cpp
+             tai/ESKF_3dofcute.c
+             tai/hmddata_dipatch_taishan.cpp
+             tai/type_taishan.cpp
+
              device_util.cpp
              uart_manager.cpp
              serialport.cpp )

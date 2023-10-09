@@ -16,6 +16,7 @@
 #include <fmt/format.h>
 //#include <nolo_log.h>
 #include "nlog.h"
+#include "tai/type_taishan.h"
 
 #ifndef TIOCPMGET
 #define TIOCPMGET 0x544D  /* PM get */
@@ -373,9 +374,14 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
                 }
 //                LOGD("raw_data_trace IMU_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
 //                LOGD("raw_data_trace IMU_DATA: %d", tBuffer[2] + 2);
-                LOGD("raw_data_trace IMU_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
+
+//                LOGD("raw_data_trace IMU_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
                 //onIMUFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
-                onIMUFrameData(buffer, tBuffer[2] + 6);
+                //onIMUFrameData(buffer, tBuffer[2] + 6);
+
+               // 解析数据
+               // nolo::doParse(buffer,tBuffer[2] + 6);
+                nolo:: onUsbData(buffer,tBuffer[2] + 6);
             }
         } else if (tBuffer[2] == 0x0010 && tBuffer[3] == 0x0f01) {
             // 1400 AA55 1000 010F BE2C3E040000000005030000005B
@@ -390,6 +396,8 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
                     count_vsync = 0;
                     last_timestamp_vsync = current_timestamp;
                 }
+
+                nolo:: onUsbData(buffer,tBuffer[2] + 6);
                 //LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
                 LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
             }

@@ -79,7 +79,7 @@ public abstract class SerialHelper {
     public void send(byte[] bOutArray) {
         try {
             this.mOutputStream.write(bOutArray);
-            Log.d(TAG, "send: sucess");
+            Log.d(TAG, "send:    "+ CheckUtils.byte2hex(bOutArray));
         } catch (IOException e) {
             e.printStackTrace();
         }
