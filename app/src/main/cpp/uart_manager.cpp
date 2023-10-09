@@ -399,7 +399,7 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
 
                 nolo:: onUsbData(buffer,tBuffer[2] + 6);
                 //LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
-                LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
+//                LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
             }
 
         } else if (tBuffer[2] == 0x0011 && tBuffer[3] == 0x026C) {
