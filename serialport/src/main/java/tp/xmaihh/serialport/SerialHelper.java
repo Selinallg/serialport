@@ -45,7 +45,8 @@ public abstract class SerialHelper {
     public void open()
             throws SecurityException, IOException, InvalidParameterException {
         Log.d(TAG, "open: 1");
-        this.mSerialPort = new SerialPort(new File(this.sPort), this.iBaudRate, this.stopBits, this.dataBits, this.parity, this.flowCon, this.flags);
+        // SerialPort: /dev/ttyACM0 baudrate=115200 stopBits=1 =dataBits8 parity=0 flowCon=0 flags=0
+        this.mSerialPort = new SerialPort(false,new File(this.sPort), this.iBaudRate, this.stopBits, this.dataBits, this.parity, this.flowCon, this.flags);
         Log.d(TAG, "open: 2");
         this.mOutputStream = this.mSerialPort.getOutputStream();
         Log.d(TAG, "open: 3");

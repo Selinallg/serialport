@@ -38,7 +38,7 @@ import tp.xmaihh.serialport.bean.ComBean;
 import tp.xmaihh.serialport.utils.ByteUtil;
 import tp.xmaihh.serialport.utils.CheckUtils;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     static {
         System.loadLibrary("uartusb");
@@ -186,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
         } else {
+            // 115200
             serialHelper = new SerialHelper(devPort, 115200) {
 
                 long last = 0;

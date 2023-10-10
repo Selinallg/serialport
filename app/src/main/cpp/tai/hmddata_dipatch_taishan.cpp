@@ -24,6 +24,12 @@ static int checkImuCount = 0;
 ESKF_3dofcute_status *g_status = NULL;
 static bool isNeedReset = false;
 
+// 默认标定参数
+float Ka_0 = 0.00479078818490731f, Ka_1 = 0.00478757245358461f, Ka_2 = 0.00477578065730860f;
+float Ba_0 = 4.26967238441205f, Ba_1 = -2.89996136905550f, Ba_2 = 9.96415237759038f;
+float Kg_0 = 0.00108113074948884f, Kg_1 = 0.00107714119887665f, Kg_2 = 0.00108016357643783f;
+float Bg_0 = -9.48548133967388f, Bg_1 = 14.2971375655937f, Bg_2 = 2.01651164479930f;
+
 uint64_t GetTimeNano(clockid_t clk_id) {
     struct timespec t;
     clock_gettime(clk_id, &t);
@@ -274,17 +280,21 @@ Java_com_nolovr_core_data_usb_UsbProxy_updateLogprint(JNIEnv *env, jobject thiz,
 }
 
 void nolo::onUsbData(unsigned char *buf, int bSize) {
-    if (jvm == NULL) {
-        return;
-    }
 
-    static JNIEnv *jniEnv = nullptr;
-    if (!jniEnv) {
-        if (jvm->AttachCurrentThread(&jniEnv, NULL) != JNI_OK) {
-            LOGE("AttachCurrentThread failed onUsbData. 1-2");
-            return;
-        }
-    }
+
+    // 不做线程切换
+
+//    if (jvm == NULL) {
+//        return;
+//    }
+//
+//    static JNIEnv *jniEnv = nullptr;
+//    if (!jniEnv) {
+//        if (jvm->AttachCurrentThread(&jniEnv, NULL) != JNI_OK) {
+//            LOGE("AttachCurrentThread failed onUsbData. 1-2");
+//            return;
+//        }
+//    }
 
     doParse(buf, bSize);
 }
@@ -383,6 +393,12 @@ void nolo::doParse(const unsigned char *buf, int bSize) {
                 imuData->_gyroTimestamp = imuData->_gyroTimestamp * 1000;
             }
             checkImuCount++;
+//            if (intrinsics == nullptr) {
+//                LOGE("checkImuCount=%d", checkImuCount);
+//            } else {
+//                LOGD("checkImuCount=%d", checkImuCount);
+//            }
+
             if (intrinsics && checkImuCount > 10) {
                 checkImuCount = 10;
                 static int imuCount = 0;
@@ -529,6 +545,12 @@ void nolo::doParse(const unsigned char *buf, int bSize) {
                      intrinsics->Ka_data[0], intrinsics->Ka_data[1], intrinsics->Ka_data[2]);
             }
             //更新算法默认参数
+
+
+//            float Ka_0 = 0.00479078818490731f, Ka_1 = 0.00478757245358461f, Ka_2 = 0.00477578065730860f;
+//            float Ba_0 = 4.26967238441205f, Ba_1 = -2.89996136905550f, Ba_2 = 9.96415237759038f;
+//            float Kg_0 = 0.00108113074948884f, Kg_1 = 0.00107714119887665f, Kg_2 = 0.00108016357643783f;
+//            float Bg_0 = -9.48548133967388f, Bg_1 = 14.2971375655937f, Bg_2 = 2.01651164479930f;
 
             if (deviceType == 3){
                 initIntrinsics(intrinsics->Ba_data[0], intrinsics->Ba_data[1], intrinsics->Ba_data[2],

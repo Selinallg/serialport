@@ -16,6 +16,14 @@
     </Button>
 
     <Button
+        android:text="stream"
+        android:onClick="doStream"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    </Button>
+
+    <Button
         android:text="close"
         android:onClick="doClose"
         android:layout_width="wrap_content"

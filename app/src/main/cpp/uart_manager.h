@@ -44,6 +44,9 @@ namespace nolo
         void open();
         void close();
 
+        void open(int64_t fd);
+        void close(int64_t fd);
+
         static std::string data_frame_to_string(void* buffer, uint32_t size);
         static std::string convert_data_to_string(void* buffer, uint32_t size);
 

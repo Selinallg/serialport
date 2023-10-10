@@ -80,3 +80,73 @@ Java_com_ex_serialport_MainActivity_updateDatas(JNIEnv *env, jclass clazz, jbyte
 //    LOGD("updateDatas 6");
 }
 
+
+extern "C"
+JNIEXPORT jbyte JNICALL
+Java_com_ex_serialport_Main3Activity_calcuCrc8(JNIEnv *env, jclass clazz, jbyteArray data,
+                                               jint length) {
+    unsigned char *cs = new unsigned char[length];//申明字符长度，与源数组长度一致
+    env->GetByteArrayRegion(data, 0, length, (jbyte *) cs);//赋值到cs
+    env->DeleteLocalRef(data);//删除引用
+    uint8_t crc8 = ::compute_easy_crc(cs, length);
+    delete[] cs;
+    return crc8;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ex_serialport_Main3Activity_write(JNIEnv *env, jobject thiz, jbyteArray datas,jint length) {
+
+    //    LOGD("updateDatas 1");
+    uint8_t *cs = new uint8_t [length];//申明字符长度，与源数组长度一致
+//    LOGD("updateDatas 2");
+    env->GetByteArrayRegion(datas, 0, length, (jbyte *) cs);//赋值到cs
+//    LOGD("updateDatas 3");
+    env->DeleteLocalRef(datas);//删除引用
+//    LOGD("updateDatas 4");
+    get_uart()->write(cs,length);
+//    get_uart()->write_direct(cs,length);
+//    LOGD("updateDatas 5");
+    delete[] cs;
+//    LOGD("updateDatas 6");
+    LOGD("write over ");
+
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ex_serialport_Main5Activity_openWithFd(JNIEnv *env, jobject thiz, jint fd) {
+    get_uart()->open(fd);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ex_serialport_Main5Activity_closeWithFd(JNIEnv *env, jobject thiz, jint fd) {
+    get_uart()->close(fd);
+}
+extern "C"
+JNIEXPORT jbyte JNICALL
+Java_com_ex_serialport_Main5Activity_calcuCrc8(JNIEnv *env, jclass clazz, jbyteArray data,
+                                               jint length) {
+    unsigned char *cs = new unsigned char[length];//申明字符长度，与源数组长度一致
+    env->GetByteArrayRegion(data, 0, length, (jbyte *) cs);//赋值到cs
+    env->DeleteLocalRef(data);//删除引用
+    uint8_t crc8 = ::compute_easy_crc(cs, length);
+    delete[] cs;
+    return crc8;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ex_serialport_Main5Activity_write(JNIEnv *env, jobject thiz, jbyteArray datas,
+                                           jint length) {
+    //    LOGD("updateDatas 1");
+    uint8_t *cs = new uint8_t[length];//申明字符长度，与源数组长度一致
+//    LOGD("updateDatas 2");
+    env->GetByteArrayRegion(datas, 0, length, (jbyte *) cs);//赋值到cs
+//    LOGD("updateDatas 3");
+    env->DeleteLocalRef(datas);//删除引用
+//    LOGD("updateDatas 4");
+    get_uart()->write(cs, length);
+//    get_uart()->write_direct(cs,length);
+//    LOGD("updateDatas 5");
+    delete[] cs;
+//    LOGD("updateDatas 6");
+    LOGD("write over ");
+}

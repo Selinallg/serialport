@@ -29,6 +29,11 @@ import java.io.OutputStream;
 public class SerialPort {
 
     private static final String TAG = "SerialPort";
+    private int fd;
+
+    public int getFd() {
+        return fd;
+    }
 
     /**
      * 串口波特率定义
@@ -199,7 +204,7 @@ public class SerialPort {
     private FileInputStream mFileInputStream;
     private FileOutputStream mFileOutputStream;
 
-    public SerialPort(File device, int baudrate, int stopBits, int dataBits, int parity, int flowCon, int flags) throws SecurityException, IOException {
+    public SerialPort(boolean useFd, File device, int baudrate, int stopBits, int dataBits, int parity, int flowCon, int flags) throws SecurityException, IOException {
 
         /* Check access permission */  // 检查是否获取了指定串口的读写权限
         if (!device.canRead() || !device.canWrite()) {
@@ -221,13 +226,21 @@ public class SerialPort {
             }
         }
 
-        mFd = open(device.getAbsolutePath(), baudrate, stopBits, dataBits, parity, flowCon, flags);
-        if (mFd == null) {
-            Log.e(TAG, "native open returns null");
-            throw new IOException();
+
+        if (useFd) {
+            fd = openWithFd(device.getAbsolutePath(), baudrate, stopBits, dataBits, parity, flowCon, flags);
+            Log.d(TAG, "SerialPort: fd="+fd);
+        } else {
+            mFd = open(device.getAbsolutePath(), baudrate, stopBits, dataBits, parity, flowCon, flags);
+            //   Log.d(TAG, "SerialPort: " + device.getAbsolutePath() + " baudrate=" + baudrate + " stopBits=" + stopBits + " =dataBits" + dataBits + " parity=" + parity + " flowCon=" + flowCon + " flags=" + flags);
+            if (mFd == null) {
+                Log.e(TAG, "native open returns null");
+                throw new IOException();
+            }
+            mFileInputStream = new FileInputStream(mFd);
+            mFileOutputStream = new FileOutputStream(mFd);
+            Log.d(TAG, "SerialPort: over");
         }
-        mFileInputStream = new FileInputStream(mFd);
-        mFileOutputStream = new FileOutputStream(mFd);
     }
 
     // Getters and setters
@@ -258,6 +271,12 @@ public class SerialPort {
     private native static FileDescriptor open(String path, int baudrate, int stopBits, int dataBits, int parity, int flowCon, int flags); //打开串口
 
     public native void close(); //关闭串口
+
+
+    private native static int openWithFd(String path, int baudrate, int stopBits, int dataBits, int parity, int flowCon, int flags); //打开串口
+
+    public native void closeWithFd(int fd); //关闭串口
+
 
     static {
         System.loadLibrary("serialport"); // 载入底层C文件 so库链接文件

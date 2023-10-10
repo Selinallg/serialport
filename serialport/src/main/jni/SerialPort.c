@@ -256,6 +256,8 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
             /* TODO: throw an exception */
             return NULL;
         }
+        LOGD("Configuring serial port over");
+
     } else {
         struct termios options;
         initUartConfig(&options);
@@ -272,6 +274,148 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
     }
 
     return mFileDescriptor;
+}
+
+
+
+JNIEXPORT jint JNICALL
+Java_android_1serialport_1api_SerialPort_openWithFd
+    (JNIEnv *env, jclass thiz, jstring path, jint baudrate, jint stopBits, jint dataBits,
+                                                    jint parity, jint flowCon, jint flags) {
+    int fd;
+    speed_t speed;
+    jobject mFileDescriptor;
+
+    /* Check arguments */
+    {
+        speed = getBaudrate(baudrate);
+        if (speed == -1) {
+            /* TODO: throw an exception */
+            LOGE("Invalid baudrate");
+            return -1;
+        }
+    }
+
+    /* Opening device */
+    {
+        jboolean iscopy;
+        const char *path_utf = (*env)->GetStringUTFChars(env, path, &iscopy);
+        LOGD("Opening serial port %s with flags 0x%x", path_utf, O_RDWR | flags);
+        fd = open(path_utf, O_RDWR | flags);
+        LOGD("open() fd = %d", fd);
+        (*env)->ReleaseStringUTFChars(env, path, path_utf);
+        if (fd == -1) {
+            /* Throw an exception */
+            LOGE("Cannot open port");
+            /* TODO: throw an exception */
+            return -1;
+        }
+    }
+
+    /* Configure device */
+    if (1) {
+        struct termios cfg;
+        LOGD("Configuring serial port");
+        if (tcgetattr(fd, &cfg)) {
+            LOGE("tcgetattr() failed");
+            close(fd);
+            /* TODO: throw an exception */
+            return NULL;
+        }
+
+        cfmakeraw(&cfg);
+        cfsetispeed(&cfg, speed);
+        cfsetospeed(&cfg, speed);
+
+        cfg.c_cflag &= ~CSIZE;
+        switch (dataBits) {
+            case 5:
+                cfg.c_cflag |= CS5;    //使用5位数据位
+                break;
+            case 6:
+                cfg.c_cflag |= CS6;    //使用6位数据位
+                break;
+            case 7:
+                cfg.c_cflag |= CS7;    //使用7位数据位
+                break;
+            case 8:
+                cfg.c_cflag |= CS8;    //使用8位数据位
+                break;
+            default:
+                cfg.c_cflag |= CS8;
+                break;
+        }
+
+        switch (parity) {
+            case 0:
+                cfg.c_cflag &= ~PARENB;    //无奇偶校验
+                break;
+            case 1:
+                cfg.c_cflag |= (PARODD | PARENB);   //奇校验
+                break;
+            case 2:
+                cfg.c_iflag &= ~(IGNPAR | PARMRK); // 偶校验
+                cfg.c_iflag |= INPCK;
+                cfg.c_cflag |= PARENB;
+                cfg.c_cflag &= ~PARODD;
+                break;
+            default:
+                cfg.c_cflag &= ~PARENB;
+                break;
+        }
+
+        switch (stopBits) {
+            case 1:
+                cfg.c_cflag &= ~CSTOPB;    //1位停止位
+                break;
+            case 2:
+                cfg.c_cflag |= CSTOPB;    //2位停止位
+                break;
+            default:
+                break;
+        }
+
+        // hardware flow control
+        switch (flowCon) {
+            case 0:
+                cfg.c_cflag &= ~CRTSCTS;    //不使用流控
+                break;
+            case 1:
+                cfg.c_cflag |= CRTSCTS;    //硬件流控
+                break;
+            case 2:
+                cfg.c_cflag |= IXON | IXOFF | IXANY;    //软件流控
+                break;
+            default:
+                cfg.c_cflag &= ~CRTSCTS;
+                break;
+        }
+
+
+        if (tcsetattr(fd, TCSANOW, &cfg)) {
+            LOGE("tcsetattr() failed");
+            close(fd);
+            /* TODO: throw an exception */
+            return -1;
+        }
+
+        LOGD("Configuring serial port over");
+    } else {
+        struct termios options;
+        initUartConfig(&options);
+        tcflush(fd, TCIOFLUSH);
+    }
+
+    /* Create a corresponding file descriptor */
+//    {
+//        jclass cFileDescriptor = (*env)->FindClass(env, "java/io/FileDescriptor");
+//        jmethodID iFileDescriptor = (*env)->GetMethodID(env, cFileDescriptor, "<init>", "()V");
+//        jfieldID descriptorID = (*env)->GetFieldID(env, cFileDescriptor, "descriptor", "I");
+//        mFileDescriptor = (*env)->NewObject(env, cFileDescriptor, iFileDescriptor);
+//        (*env)->SetIntField(env, mFileDescriptor, descriptorID, (jint) fd);
+//    }
+    LOGD("open  over ");
+    return fd;
 }
 
 /*
@@ -294,3 +438,8 @@ JNIEXPORT void JNICALL Java_android_1serialport_1api_SerialPort_close
     close(descriptor);
 }
 
+
+JNIEXPORT void JNICALL
+Java_android_1serialport_1api_SerialPort_closeWithFd(JNIEnv *env, jobject thiz, jint fd) {
+    close(fd);
+}

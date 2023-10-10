@@ -73,7 +73,7 @@ void nolo::uart_manager::open() {
         LOGD("open /dev/ttyHS4 error, %d", errno);
     } else {
         fd = ::open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
-        LOGD("open /dev/ttyACM0 error, %d", errno);
+        LOGD("open /dev/ttyACM0 error, %d ==》fd=%d", errno,fd);
     }
 
 //    Must(fd >= 0, "open /dev/ttyHS4 error, %d", errno);
@@ -81,6 +81,8 @@ void nolo::uart_manager::open() {
     if (isSonic) {
         termios options{};
 //    Must(tcgetattr(fd, &options) == 0, "tcgetattr failed: %d", errno);
+
+        // SerialPort: /dev/ttyACM0 baudrate=115200 stopBits=1 =dataBits8 parity=0 flowCon=0 flags=0
         initUartConfig(&options);
 //    Must(tcsetattr(fd, TCSANOW, &options) == 0,"tcsetattr failed: %d", errno);
         tcflush(fd, TCIOFLUSH);
@@ -101,12 +103,14 @@ void nolo::uart_manager::open() {
         LOGD("mcu_pwr on called\n");
     }
 
-    SendDefaultCmd();
+    if (isSonic) {
+        SendDefaultCmd();
+    }
 //    NVR_HANDTRACK_DEBUG("mcu_trans start called\n");
 }
 
 void nolo::uart_manager::close() {
-    LOGD("uart close start fd=%d",fd);
+    LOGD("uart close start fd=%d", fd);
     if (fd == -1) {
         return;
     }
@@ -141,6 +145,115 @@ void nolo::uart_manager::close() {
     }
     LOGD("uart close over");
 }
+
+
+
+void nolo::uart_manager::open(int64_t intput_fd) {
+    /*
+     * 打开com3串口高级日志
+     * adb shell
+     * echo 8 >proc/sys/kernel/printk
+     * */
+
+//    close();
+
+//    if (isSonic) {
+//
+//        //kInfo("start to open uart");
+//
+//        mcu_pwr_fd = ::open("/sys/devices/platform/vendor/vendor:qcom,fan_c/mcu_pwr", O_RDWR);
+////    Must(mcu_pwr_fd > 0, "open mcu_pwr gpio error, %d", errno);
+//        if (mcu_pwr_fd > 0) {
+//            const char *close_mcu = "0";
+//            usleep(10000);
+//            ::write(mcu_pwr_fd, close_mcu, strlen(close_mcu));
+//            usleep(10000);
+////        NVR_HANDTRACK_DEBUG("mcu_pwr off called\n");
+//        }
+//        LOGE("mcu_pwr_fd %d", mcu_pwr_fd);
+//    }
+
+//    if (isSonic) {
+//        fd = ::open("/dev/ttyHS4", O_RDWR | O_NOCTTY);
+//        LOGD("open /dev/ttyHS4 error, %d", errno);
+//    } else {
+//        fd = ::open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
+//        LOGD("open /dev/ttyACM0 error, %d ==》fd=%d", errno,fd);
+//    }
+
+//    Must(fd >= 0, "open /dev/ttyHS4 error, %d", errno);
+
+    if (isSonic) {
+        termios options{};
+//    Must(tcgetattr(fd, &options) == 0, "tcgetattr failed: %d", errno);
+
+        // SerialPort: /dev/ttyACM0 baudrate=115200 stopBits=1 =dataBits8 parity=0 flowCon=0 flags=0
+        initUartConfig(&options);
+//    Must(tcsetattr(fd, TCSANOW, &options) == 0,"tcsetattr failed: %d", errno);
+        tcflush(fd, TCIOFLUSH);
+//    NVR_HANDTRACK_DEBUG("uart_open called\n");
+    }
+
+    fd = intput_fd;
+
+    uartReadFlag = true;
+    readThread = std::thread([this]() {
+        readThreadImpl();
+    });
+
+    if (mcu_pwr_fd > 0) {
+        const char *open_mcu = "1";
+        ::write(mcu_pwr_fd, open_mcu, strlen(open_mcu));
+        usleep(600000);
+        ::close(mcu_pwr_fd);
+//        NVR_HANDTRACK_DEBUG("mcu_pwr on called\n");
+        LOGD("mcu_pwr on called\n");
+    }
+
+    if (isSonic) {
+        SendDefaultCmd();
+    }
+//    NVR_HANDTRACK_DEBUG("mcu_trans start called\n");
+}
+
+void nolo::uart_manager::close(int64_t intput_fd) {
+    LOGD("uart close start fd=%d  intput_fd=%d", fd,intput_fd);
+    if (fd == -1) {
+        return;
+    }
+
+    if (isSonic) {
+
+        //kInfo("start to close uart");
+
+        SendDefaultStopCmd();
+//    NVR_HANDTRACK_DEBUG("mcu_trans stop called\n");
+
+        int mcu_pwr_fd = ::open("/sys/devices/platform/vendor/vendor:qcom,fan_c/mcu_pwr", O_RDWR);
+//    Must(mcu_pwr_fd > 0, "open mcu_pwr gpio error, %d", errno);
+        if (mcu_pwr_fd > 0) {
+            const char *close_mcu = "0";
+            usleep(10000);
+            ::write(mcu_pwr_fd, close_mcu, strlen(close_mcu));
+            usleep(10000);
+            ::close(mcu_pwr_fd);
+//        NVR_HANDTRACK_DEBUG("mcu_pwr_off called\n");
+        }
+    }
+    int arg = 0;
+    ::ioctl(fd, TIOCPMPUT, &arg);
+
+    ::close(fd);
+//    NVR_HANDTRACK_DEBUG("uart_close called\n");
+    fd = -1;
+    uartReadFlag = false;
+    if (readThread.joinable()) {
+        readThread.join();
+    }
+    LOGD("uart close over");
+}
+
+
 
 void nolo::uart_manager::initUartConfig(termios *cfg) {
 
@@ -179,6 +292,10 @@ void nolo::uart_manager::initUartConfig(termios *cfg) {
 int64_t last_timestamp = 0;
 int64_t count = 0;
 
+
+int64_t last_timestamp_read = 0;
+int64_t count_read = 0;
+
 void nolo::uart_manager::readThreadImpl() {
     std::vector<uint8_t> buffer;
     buffer.resize(10240);
@@ -195,14 +312,14 @@ void nolo::uart_manager::readThreadImpl() {
         //  std::this_thread::sleep_for(std::chrono::milliseconds (4));
 
         auto rv = read(fd, &buffer[0], buffer.size());
-        LOGD("read IMU_DATA:%d", rv);
+       // LOGD("read IMU_DATA:%d", rv);
         if (rv > 0) {
-            count++;
+            count_read++;
             auto current_timestamp = device_util::get_timestamp_ms();
-            if (current_timestamp - last_timestamp > 1000) {
-                LOGD("read IMU_DATA: Hz=%d", count);
-                count = 0;
-                last_timestamp = current_timestamp;
+            if (current_timestamp - last_timestamp_read > 1000) {
+                LOGD("read IMU_DATA: Hz=%d", count_read);
+                count_read = 0;
+                last_timestamp_read = current_timestamp;
             }
             if (rv >= 1024) {
 //                NVR_LOGD(TAG, "readThreadImpl abnormal");
@@ -228,7 +345,8 @@ void nolo::uart_manager::readThreadImpl() {
         if (rv > 0) {
             auto before_time = std::chrono::steady_clock::now();
             onRead(&buffer[0], rv);
-            process_package(&buffer[0], rv);
+           // process_package(&buffer[0], rv);
+            process_package_tai(&buffer[0], rv);
             auto duration = std::chrono::steady_clock::now() - before_time;
             if (duration > std::chrono::milliseconds(4)) {
                 //kWarn("uart_process to long time: {}, size: {}", duration.count(), rv);
@@ -250,15 +368,18 @@ bool nolo::uart_manager::write(uint8_t *buffer, uint32_t size) {
 
     if (fd == -1) {
         //kWarn("fd is -1 when call write");
+        LOGD("fd is -1 when call write");
         return false;
     }
-
+    LOGD("write1");
+    // 0700AA5503000101FB
     if (tempBuffer.size() < size + 4) {
         tempBuffer.resize(size + 4);
         tempBuffer[1] = 0x55aa;
     }
     tempBuffer[0] = size + 2;
     memcpy(&tempBuffer[2], cmd, size);
+    LOGD("write2");
 
     auto startIndex = 0;
     size += 4;
@@ -266,13 +387,16 @@ bool nolo::uart_manager::write(uint8_t *buffer, uint32_t size) {
 //        startIndex = 2;
 //        size -= 4;
 //    }
-
     lastCheckCmd = cmd[1];
-    auto write_result = ::write(fd, &tempBuffer[startIndex], size);
-
+//    auto write_result = ::write(fd, &tempBuffer[startIndex], size);
+    auto write_result = ::write(fd, buffer, size);
+    LOGD("write3 write_result=%d %s" ,write_result,buffer);
+    //LOGD("raw_data_trace IMU_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
+//    LOGD("write3 write_result: %s", uart_manager::data_frame_to_string(&tempBuffer, size).c_str());
     if (cmd[1] == 0x1001 || cmd[1] == 0x1000) {
         return true;
     }
+    LOGD("write4");
 
     //kInfo("====>cmd write: {}", convert_data_to_string(&tempBuffer[startIndex], size));
 
@@ -300,7 +424,7 @@ bool nolo::uart_manager::write(uint8_t *buffer, uint32_t size) {
 //    if(!isChirpCommand(lastCheckCmd)){
 //        lastCheckCmd = 0;
 //    }
-
+    LOGD("result=%d",result);
     return result;
 }
 
@@ -344,6 +468,7 @@ bool nolo::uart_manager::isChirpCommand(uint16_t cmd) {
 
 int64_t last_timestamp_vsync = 0;
 int64_t count_vsync = 0;
+
 void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
     if (size == 0) {
         return;
@@ -379,13 +504,13 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
                 //onIMUFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
                 //onIMUFrameData(buffer, tBuffer[2] + 6);
 
-               // 解析数据
-               // nolo::doParse(buffer,tBuffer[2] + 6);
-                nolo:: onUsbData(buffer,tBuffer[2] + 6);
+                // 解析数据
+                // nolo::doParse(buffer,tBuffer[2] + 6);
+                nolo::onUsbData(buffer, tBuffer[2] + 6);
             }
         } else if (tBuffer[2] == 0x0010 && tBuffer[3] == 0x0f01) {
             // 1400 AA55 1000 010F BE2C3E040000000005030000005B
-           // LOGD("raw_data_trace 1 VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
+            // LOGD("raw_data_trace 1 VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
             //vsync Data Frame
             if (onIPDFrameData && isValidDataCrc(buffer, tBuffer[0] + 2)) {
 //                onIPDFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);
@@ -397,7 +522,7 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
                     last_timestamp_vsync = current_timestamp;
                 }
 
-                nolo:: onUsbData(buffer,tBuffer[2] + 6);
+                nolo::onUsbData(buffer, tBuffer[2] + 6);
                 //LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
 //                LOGD("raw_data_trace VSYNC_DATA: %s", uart_manager::data_frame_to_string(buffer, tBuffer[2] + 6).c_str());
             }
@@ -472,7 +597,8 @@ void nolo::uart_manager::process_package(uint8_t *buffer, int32_t size) {
     }
 
 //    kInfo("process_package IMU_DATA: {}", uart_manager::data_frame_to_string(buffer, size));
-    LOGD("process_package IMU_DATA:%s size=%d", uart_manager::data_frame_to_string(buffer, size).c_str(),size);
+    LOGD("process_package IMU_DATA:%s size=%d",
+         uart_manager::data_frame_to_string(buffer, size).c_str(), size);
     auto tBuffer = (uint16_t *) buffer;
 
     if (tBuffer[1] == 0x55aa && tBuffer[0] == tBuffer[2] + 4) {
@@ -579,6 +705,7 @@ void nolo::uart_manager::write_direct(uint8_t *buffer, uint32_t size) {
         return;
     }
     auto *cmd = (uint16_t *) buffer;
+
     if (tempBuffer.size() < size + 4) {
         tempBuffer.resize(size + 4);
         tempBuffer[1] = 0x55aa;
@@ -593,7 +720,6 @@ void nolo::uart_manager::write_direct(uint8_t *buffer, uint32_t size) {
         size -= 4;
     }
     //kInfo("====>cmd write: {}", data_frame_to_string(&tempBuffer[startIndex], size));
-
 
     lastCheckCmd = cmd[1];
     ::write(fd, &tempBuffer[startIndex], size);
