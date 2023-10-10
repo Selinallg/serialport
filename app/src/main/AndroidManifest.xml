@@ -17,7 +17,10 @@
         <!-- <activity -->
         <!-- android:name=".Main2Activity" -->
         <!-- android:exported="false" /> -->
-        <activity android:name=".Main5Activity">
+
+<!--   Main5Activity int 文件描述符 OK     -->
+<!--   Main3Activity int 完成native操作窜口 OK     -->
+        <activity android:name=".Main3Activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
