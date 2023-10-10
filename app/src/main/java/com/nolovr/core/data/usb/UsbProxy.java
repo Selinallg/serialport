@@ -172,7 +172,10 @@ public abstract class UsbProxy extends UsbBase {
 
     public void imuData(long timestampAndroid, long timestamp, short acc_X, short acc_Y, short acc_Z,
                         short gyro_X, short gyro_Y, short gyro_Z) {
-        // LogUtil.d(TAG, "imuData: acc_X=" + acc_X + " | " + "gyro_X=" + gyro_X);
+        LogUtil.e(TAG, 0 + "imuData" + "\r\n" +
+                "timestamp: Android firmware| " + timestampAndroid + " " + timestamp + "|" + "\r\n" +
+                "imuData: acc_X acc_Y acc_Z gyro_X gyro_Y gyro_Z" +
+                " " + acc_X + " " + acc_Y + " "+ acc_Z + " " + gyro_X + " " + gyro_Y + " " + gyro_Z);
         if (isLogImu) {
             FileDataUtils.writeToFile(FileDataUtils.TYPE_IMU, String.format(imu, timestampAndroid,
                     timestamp, -acc_Y, -acc_Z, acc_X, -gyro_Y, -gyro_Z, gyro_X));

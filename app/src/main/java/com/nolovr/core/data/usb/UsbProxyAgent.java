@@ -503,7 +503,7 @@ public class UsbProxyAgent {
         long currentTimeMillis = System.currentTimeMillis();
         long difftime = currentTimeMillis - lastTime;
         if (difftime > 1000) {
-            LogUtil.e(TAG, 0 + "  <= map size ;Hz onNewData imuData =》"
+            LogUtil.d(TAG, 0 + "  <= map size ;Hz onNewData imuData =》"
                     + count + "|" + "imuData: acc_X=" + acc_X + " acc_Y=" + acc_Y + " acc_Z="
                     + acc_Z + " gyro_X=" + gyro_X + " gyro_Y=" + gyro_Y + " gyro_Z=" + gyro_Z);
             lastTime = currentTimeMillis;
