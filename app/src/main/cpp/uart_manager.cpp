@@ -78,7 +78,7 @@ void nolo::uart_manager::open() {
 
 //    Must(fd >= 0, "open /dev/ttyHS4 error, %d", errno);
 
-    if (isSonic) {
+    if (true) {
         termios options{};
 //    Must(tcgetattr(fd, &options) == 0, "tcgetattr failed: %d", errno);
 
@@ -298,7 +298,8 @@ int64_t count_read = 0;
 
 void nolo::uart_manager::readThreadImpl() {
     std::vector<uint8_t> buffer;
-    buffer.resize(10240);
+    //buffer.resize(10240);
+    buffer.resize(256);
     int count = 0;
 //    device_util::set_self_thread_priority();
 //    //device_util::set_cur_thread_affinity(2)
@@ -312,7 +313,7 @@ void nolo::uart_manager::readThreadImpl() {
         //  std::this_thread::sleep_for(std::chrono::milliseconds (4));
 
         auto rv = read(fd, &buffer[0], buffer.size());
-       // LOGD("read IMU_DATA:%d", rv);
+        //LOGD("read IMU_DATA:%d", rv);
         if (rv > 0) {
             count_read++;
             auto current_timestamp = device_util::get_timestamp_ms();
@@ -337,6 +338,7 @@ void nolo::uart_manager::readThreadImpl() {
             }
         } else {
             //  //kInfo("test_log_sys_clock: **************** rv:{}", rv);
+            LOGD("read IMU_DATA:%d  ==》 do nothing  ", rv);
         }
 
         //     continue;
@@ -510,7 +512,7 @@ void nolo::uart_manager::process_package_tai(uint8_t *buffer, int32_t size) {
             }
         } else if (tBuffer[2] == 0x0010 && tBuffer[3] == 0x0f01) {
             // 1400 AA55 1000 010F BE2C3E040000000005030000005B
-            // LOGD("raw_data_trace 1 VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
+//             LOGD("raw_data_trace 1 VSYNC_DATA: %s", uart_manager::data_frame_to_string((uint8_t*)&tBuffer[2], tBuffer[2] + 2).c_str());
             //vsync Data Frame
             if (onIPDFrameData && isValidDataCrc(buffer, tBuffer[0] + 2)) {
 //                onIPDFrameData((uint8_t *) &tBuffer[2], tBuffer[2] + 2);

@@ -11,7 +11,7 @@
 #include <android/log.h>
 #include <errno.h>
 
-#define  LOG_TAG    "lgIMU"
+#define  LOG_TAG    "glssIMU"
 
 #define  LOG(...)  __android_log_print(ANDROID_LOG_DEBUG,  LOG_TAG, __VA_ARGS__ )
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,  LOG_TAG, __VA_ARGS__ )

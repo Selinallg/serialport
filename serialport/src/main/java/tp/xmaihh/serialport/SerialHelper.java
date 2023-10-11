@@ -1,5 +1,6 @@
 package tp.xmaihh.serialport;
 
+import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -54,6 +55,7 @@ public abstract class SerialHelper {
         Log.d(TAG, "open: 4");
         this.mReadThread = new ReadThread();
         Log.d(TAG, "open: 5");
+        this.mReadThread.setName("read");
         this.mReadThread.start();
         Log.d(TAG, "open: 6");
         this.mSendThread = new SendThread();
@@ -101,6 +103,7 @@ public abstract class SerialHelper {
 
         public void run() {
             super.run();
+            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
             while (!isInterrupted()) {
                 try {
                     if (SerialHelper.this.mInputStream == null) {

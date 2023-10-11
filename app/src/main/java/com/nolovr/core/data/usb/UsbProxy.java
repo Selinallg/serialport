@@ -25,7 +25,7 @@ public abstract class UsbProxy extends UsbBase {
 
     UsbProxyAgent agent;
 
-    protected boolean isLogImu = false;
+    protected boolean isLogImu = true;
     private static boolean isImuOpened = false;// imu 数据流 是否开启标记
 
     private static final String TAG = "UsbProxy";
@@ -75,18 +75,13 @@ public abstract class UsbProxy extends UsbBase {
             agent = new UsbProxyAgent(mContext.getApplicationContext());
         }
         agent.setClientcallback(hostlistener);
-        boolean saveRawData = false;
-        LogUtil.i(TAG, "init: saveRawData=" + saveRawData);
 
         agent.init();
-
-
-        isLogImu = saveRawData;
         if (isLogImu) {
             dataWriteThreadPool = Executors.newFixedThreadPool(1, new NamedThreadFactory(TAG));
             initLogIMU(false);
             String s = FileDataUtils.setIsWriteEnable(true, mContext.getApplicationContext());
-            LogUtil.d(TAG, "init: ==>" + s);
+            LogUtil.e(TAG, "init: file path ==>" + s);
         }
     }
 
@@ -172,10 +167,10 @@ public abstract class UsbProxy extends UsbBase {
 
     public void imuData(long timestampAndroid, long timestamp, short acc_X, short acc_Y, short acc_Z,
                         short gyro_X, short gyro_Y, short gyro_Z) {
-        LogUtil.e(TAG, 0 + "imuData" + "\r\n" +
-                "timestamp: Android firmware| " + timestampAndroid + " " + timestamp + "|" + "\r\n" +
-                "imuData: acc_X acc_Y acc_Z gyro_X gyro_Y gyro_Z" +
-                " " + acc_X + " " + acc_Y + " "+ acc_Z + " " + gyro_X + " " + gyro_Y + " " + gyro_Z);
+//        LogUtil.e(TAG, 0 + "imuData" + "\r\n" +
+//                "timestamp: Android firmware| " + timestampAndroid + " " + timestamp + "|" + "\r\n" +
+//                "imuData: acc_X acc_Y acc_Z gyro_X gyro_Y gyro_Z" +
+//                " " + acc_X + " " + acc_Y + " "+ acc_Z + " " + gyro_X + " " + gyro_Y + " " + gyro_Z);
         if (isLogImu) {
             FileDataUtils.writeToFile(FileDataUtils.TYPE_IMU, String.format(imu, timestampAndroid,
                     timestamp, -acc_Y, -acc_Z, acc_X, -gyro_Y, -gyro_Z, gyro_X));

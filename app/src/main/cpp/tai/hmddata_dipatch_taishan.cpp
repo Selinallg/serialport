@@ -393,13 +393,11 @@ void nolo::doParse(const unsigned char *buf, int bSize) {
                 imuData->_gyroTimestamp = imuData->_gyroTimestamp * 1000;
             }
             checkImuCount++;
-//            if (intrinsics == nullptr) {
-//                LOGE("checkImuCount=%d", checkImuCount);
-//            } else {
-//                LOGD("checkImuCount=%d", checkImuCount);
-//            }
-
-            if (intrinsics && checkImuCount > 10) {
+            // todo
+            // 正常逻辑
+            //if (intrinsics && checkImuCount > 10) {
+            // 没有标定，使用默认值
+            if (checkImuCount > 10) {
                 checkImuCount = 10;
                 static int imuCount = 0;
                 imuCount++;
@@ -421,6 +419,7 @@ void nolo::doParse(const unsigned char *buf, int bSize) {
                                                       imuData->_gyro[2]);
 
                 if (!isUse) {
+                    LOGE("isUse-------------");
                     delete imuData;
                     return;
                 }

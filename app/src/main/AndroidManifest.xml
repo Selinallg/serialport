@@ -9,9 +9,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-<!--        <activity-->
-<!--            android:name=".Main3Activity"-->
-<!--            android:exported="false" />-->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
 
 
         <!-- <activity -->
@@ -21,7 +21,7 @@
 <!--   MainActivity java OK     -->
 <!--   Main5Activity int 文件描述符 OK     -->
 <!--   Main3Activity int 完成native操作窜口 OK     -->
-        <activity android:name=".MainActivity">
+        <activity android:name=".Main3Activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

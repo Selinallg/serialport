@@ -65,6 +65,9 @@ public class Main2Activity extends AppCompatActivity {
 
     }
 
+    public void goJava(View view) {
+    }
+
     private class ReadThread
             extends Thread {
         private ReadThread() {

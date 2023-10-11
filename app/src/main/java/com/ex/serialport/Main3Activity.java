@@ -4,6 +4,7 @@ import static com.nolovr.core.data.usb.config.Config.CMD_DEVICE_HMD_UPLOAD_START
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -54,6 +55,15 @@ public class Main3Activity extends BaseActivity {
 
     public void doClose(View view) {
         close();
+    }
+
+
+
+    public void goJava(View view) {
+
+        Intent intent = new Intent(this,MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
 
