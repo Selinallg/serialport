@@ -195,11 +195,19 @@ void nolo::uart_manager::open(int64_t intput_fd) {
     }
 
     fd = intput_fd;
+    std::string name = "uart_read";
+    //pthread_setname_np(pthread_self(), name.c_str());
 
     uartReadFlag = true;
     readThread = std::thread([this]() {
         readThreadImpl();
     });
+
+//    readThread = std::thread nolo([this] {
+//        readThreadImpl();
+//    });
+
+    pthread_setname_np(readThread.native_handle(), name.c_str());
 
     if (mcu_pwr_fd > 0) {
         const char *open_mcu = "1";

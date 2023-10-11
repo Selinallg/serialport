@@ -47,7 +47,7 @@ public abstract class SerialHelper {
             throws SecurityException, IOException, InvalidParameterException {
         Log.d(TAG, "open: 1");
         // SerialPort: /dev/ttyACM0 baudrate=115200 stopBits=1 =dataBits8 parity=0 flowCon=0 flags=0
-        this.mSerialPort = new SerialPort(false,new File(this.sPort), this.iBaudRate, this.stopBits, this.dataBits, this.parity, this.flowCon, this.flags);
+        this.mSerialPort = new SerialPort(false, new File(this.sPort), this.iBaudRate, this.stopBits, this.dataBits, this.parity, this.flowCon, this.flags);
         Log.d(TAG, "open: 2");
         this.mOutputStream = this.mSerialPort.getOutputStream();
         Log.d(TAG, "open: 3");
@@ -82,7 +82,7 @@ public abstract class SerialHelper {
     public void send(byte[] bOutArray) {
         try {
             this.mOutputStream.write(bOutArray);
-            Log.d(TAG, "send:    "+ CheckUtils.byte2hex(bOutArray));
+            Log.d(TAG, "send:    " + CheckUtils.byte2hex(bOutArray));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -103,7 +103,7 @@ public abstract class SerialHelper {
 
         public void run() {
             super.run();
-            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+//            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
             while (!isInterrupted()) {
                 try {
                     if (SerialHelper.this.mInputStream == null) {
@@ -132,7 +132,9 @@ public abstract class SerialHelper {
                                 SerialHelper.this.onDataReceived(ComRecData);
                             }
                         } else {
-                            SystemClock.sleep(50);
+                            int sleeptime = 1;
+                            SystemClock.sleep(sleeptime);
+                            Log.d(TAG, "run: SystemClock.sleep() " + sleeptime);
                         }
                     }
 
