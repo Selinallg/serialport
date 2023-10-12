@@ -135,6 +135,7 @@ public abstract class SerialHelper {
                             int sleeptime = 1;
                             SystemClock.sleep(sleeptime);
                             Log.d(TAG, "run: SystemClock.sleep() " + sleeptime);
+//                            Log.d(TAG, "run: _MainActivity_  跑空了");
                         }
                     }
 

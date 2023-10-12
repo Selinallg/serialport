@@ -57,7 +57,7 @@ public class MainActivity extends BaseActivity {
     private SerialHelper serialHelper;
     private Spinner spBote;
     private Button btOpen;
-    private Button btStream,btCalib;
+    private Button btStream, btCalib;
     //    private LogListAdapter logListAdapter;
     private Spinner spDatab;
     private Spinner spParity;
@@ -234,6 +234,10 @@ public class MainActivity extends BaseActivity {
 
                 private synchronized void _dipatch(ComBean comBean) {
                     updateDatas(comBean.bRec, comBean.bRec.length);
+                    Log.d(TAG, "_dipatch: length " + comBean.bRec.length);
+//                    if (comBean.bRec.length > 32) {
+//                        Log.d(TAG, "_dipatch: length " + comBean.bRec.length);
+//                    }
                     count++;
                     try {
                         long c = System.currentTimeMillis();
@@ -451,7 +455,7 @@ public class MainActivity extends BaseActivity {
         for (int i = 0; i < 10; ++i) {
 //            cmd[0] = 2;
 //            cmd[1] = (byte) 0x101;
-           // readCalibrationParams();
+            // readCalibrationParams();
 
             byte[] cmd2 = makeCmd(null, CMD_DEVICE_HMD_UPLOAD_START);
             serialHelper.send(cmd2);
