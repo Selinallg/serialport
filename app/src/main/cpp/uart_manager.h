@@ -55,6 +55,7 @@ namespace nolo
 
     private:
 
+        void initUartConfigTai(termios* cfg);
         void initUartConfig(termios* cfg);
 
         void readThreadImpl();

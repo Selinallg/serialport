@@ -256,13 +256,15 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
             /* TODO: throw an exception */
             return NULL;
         }
-        LOGD("Configuring serial port over");
+        LOGD("Configuring serial port over baudrate=%d stopBits=%d dataBits=%d parity=%d flowCon=%d flags=%d "
+             ,baudrate,stopBits,dataBits,parity,flowCon,flags);
 
     } else {
         struct termios options;
         initUartConfig(&options);
         tcflush(fd, TCIOFLUSH);
     }
+
 
     /* Create a corresponding file descriptor */
     {

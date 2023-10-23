@@ -100,7 +100,7 @@ public abstract class SerialHelper {
 
     private class ReadThread
             extends Thread {
-
+        int count;
         public void run() {
             super.run();
 //            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -132,10 +132,13 @@ public abstract class SerialHelper {
                                 SerialHelper.this.onDataReceived(ComRecData);
                             }
                         } else {
-                            int sleeptime = 1;
-                            SystemClock.sleep(sleeptime);
-                            Log.d(TAG, "run: SystemClock.sleep() " + sleeptime);
-//                            Log.d(TAG, "run: _MainActivity_  跑空了");
+                            count++;
+                            if (count == 90000) {
+                                int sleeptime = 1;
+                                SystemClock.sleep(sleeptime);
+                                Log.d(TAG, "==> run: SystemClock.sleep() " + sleeptime);
+                                count = 0;
+                            }
                         }
                     }
 
